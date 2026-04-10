@@ -1,7 +1,6 @@
-package com.bankingSimulationSystem.workFlow.controller;
+package com.bankingSimulationSystem.workFlow.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
