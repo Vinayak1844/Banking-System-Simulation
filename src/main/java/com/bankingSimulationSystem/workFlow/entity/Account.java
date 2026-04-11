@@ -21,5 +21,5 @@ public class Account {
     private double balance;
 
     @ManyToOne
-    private User userp;
+    private User user;
 }
