@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Data
 @Getter @Setter
 public class User {
     @Id
@@ -17,8 +16,6 @@ public class User {
     private String email;
     private String password;
 
-    @Enumerated(EnumType.STRING)
-    private Role role;
 
 
 }

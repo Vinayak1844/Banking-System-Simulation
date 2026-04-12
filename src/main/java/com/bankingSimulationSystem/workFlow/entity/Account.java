@@ -6,17 +6,17 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Data
 @Getter @Setter
 public class Account {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Enumerated(EnumType.STRING)
     private AccountType accountType;
 
+    @Column(nullable = false)
     private String accountNumber;
     private double balance;
 
