@@ -19,8 +19,13 @@ public class TransactionService {
 
     @Transactional
     public void deposit(Long accId,double amount){
-        Account acc = accountRepo.findById(accId).orElseThrow();
+        Account acc = accountRepo.findById(accId).orElseThrow(()-> new RuntimeException("Account Not Found"));
+
+        if(amount <= 0){
+            throw new RuntimeException("Amount must be positive");
+        }
         acc.setBalance(acc.getBalance() + amount);
+
 
         Transaction txn = new Transaction();
         txn.setTransactionType(TransactionType.DEPOSIT);
@@ -32,9 +37,45 @@ public class TransactionService {
     }
 
     @Transactional
-    public void transfer(Long fromId,Long toId,Long amount){
-        Account from  = accountRepo.findById(fromId).orElseThrow();
-        Account to = accountRepo.findById(toId).orElseThrow();
+    public void withdraw(Long accId,double amount){
+
+        if(amount <= 0){
+            throw new RuntimeException("Invalid amount");
+        }
+
+        Account acc = accountRepo.findById(accId)
+                .orElseThrow();
+
+        if(acc.getBalance() < amount){
+            throw new RuntimeException("Insufficient Balance");
+        }
+
+        acc.setBalance(acc.getBalance() - amount);
+
+        Transaction txn = new Transaction();
+        txn.setTransactionType(TransactionType.WITHDRAW);
+        txn.setAmount(amount);
+        txn.setTimeStamp(LocalDateTime.now());
+        txn.setFromAccount(acc);
+
+        transactionRepo.save(txn);
+    }
+
+    @Transactional
+    public void transfer(Long fromId,Long toId,double amount){
+
+        if(fromId.equals(toId)){
+            throw new RuntimeException("Cannot transfer to same account");
+        }
+
+        if(amount <= 0){
+            throw new RuntimeException("Invalid amount");
+        }
+
+        Account from  = accountRepo.findById(fromId).orElseThrow(()-> new RuntimeException("No 'from' acc exists"));
+        Account to = accountRepo.findById(toId).orElseThrow(()-> new RuntimeException("No 'to' acc exists"));
+
+
 
         if(from.getBalance() < amount) throw new RuntimeException("Insufficient Balance");
 
