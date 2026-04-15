@@ -2,6 +2,7 @@ package com.bankingSimulationSystem.workFlow.service;
 
 import com.bankingSimulationSystem.workFlow.entity.Account;
 import com.bankingSimulationSystem.workFlow.entity.User;
+import com.bankingSimulationSystem.workFlow.exception.ResourceNotFoundException;
 import com.bankingSimulationSystem.workFlow.repository.AccountRepository;
 import com.bankingSimulationSystem.workFlow.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,27 +19,12 @@ public class AccountService {
     private final UserRepository userRepo;
 
     public Account createAccount (String email,Account account){
-        User user = userRepo.findByEmail(email).orElseThrow(()-> new RuntimeException("User Not Found"));
+        User user = userRepo.findByEmail(email).orElseThrow(()-> new ResourceNotFoundException("User Not Found"));
         account.setUser(user);
         account.setBalance(0);
         account.setAccountNumber(UUID.randomUUID().toString());
         return repo.save(account);
     }
-//        public Account createAccount(String email, Account account) {
-//
-//            System.out.println("EMAIL RECEIVED = " + email);
-//
-//            User user = userRepo.findByEmail(email)
-//                    .orElseThrow(() -> new RuntimeException("USER NOT FOUND"));
-//
-//            System.out.println("USER FOUND = " + user.getName());
-//
-//            account.setUser(user);
-//            account.setBalance(0);
-//            account.setAccountNumber(UUID.randomUUID().toString());
-//
-//            return repo.save(account);
-//        }
 
     public List<Account> getAccounts(String email){
         User user = userRepo.findByEmail(email).orElseThrow();

@@ -3,6 +3,8 @@ package com.bankingSimulationSystem.workFlow.service;
 import com.bankingSimulationSystem.workFlow.entity.Account;
 import com.bankingSimulationSystem.workFlow.entity.Transaction;
 import com.bankingSimulationSystem.workFlow.entity.TransactionType;
+import com.bankingSimulationSystem.workFlow.exception.BadRequestException;
+import com.bankingSimulationSystem.workFlow.exception.ResourceNotFoundException;
 import com.bankingSimulationSystem.workFlow.repository.AccountRepository;
 import com.bankingSimulationSystem.workFlow.repository.TransactionRepository;
 import jakarta.transaction.Transactional;
@@ -19,10 +21,10 @@ public class TransactionService {
 
     @Transactional
     public void deposit(Long accId,double amount){
-        Account acc = accountRepo.findById(accId).orElseThrow(()-> new RuntimeException("Account Not Found"));
+        Account acc = accountRepo.findById(accId).orElseThrow(()-> new ResourceNotFoundException("Account Not Found"));
 
         if(amount <= 0){
-            throw new RuntimeException("Amount must be positive");
+            throw new BadRequestException("Amount must be positive");
         }
         acc.setBalance(acc.getBalance() + amount);
 
@@ -40,14 +42,14 @@ public class TransactionService {
     public void withdraw(Long accId,double amount){
 
         if(amount <= 0){
-            throw new RuntimeException("Invalid amount");
+            throw new BadRequestException("Invalid amount");
         }
 
         Account acc = accountRepo.findById(accId)
                 .orElseThrow();
 
         if(acc.getBalance() < amount){
-            throw new RuntimeException("Insufficient Balance");
+            throw new BadRequestException("Insufficient Balance");
         }
 
         acc.setBalance(acc.getBalance() - amount);
@@ -65,19 +67,19 @@ public class TransactionService {
     public void transfer(Long fromId,Long toId,double amount){
 
         if(fromId.equals(toId)){
-            throw new RuntimeException("Cannot transfer to same account");
+            throw new BadRequestException("Cannot transfer to same account");
         }
 
         if(amount <= 0){
-            throw new RuntimeException("Invalid amount");
+            throw new BadRequestException("Invalid amount");
         }
 
-        Account from  = accountRepo.findById(fromId).orElseThrow(()-> new RuntimeException("No 'from' acc exists"));
-        Account to = accountRepo.findById(toId).orElseThrow(()-> new RuntimeException("No 'to' acc exists"));
+        Account from  = accountRepo.findById(fromId).orElseThrow(()-> new ResourceNotFoundException("No 'from' acc exists"));
+        Account to = accountRepo.findById(toId).orElseThrow(()-> new ResourceNotFoundException("No 'to' acc exists"));
 
 
 
-        if(from.getBalance() < amount) throw new RuntimeException("Insufficient Balance");
+        if(from.getBalance() < amount) throw new BadRequestException("Insufficient Balance");
 
         from.setBalance(from.getBalance() - amount);
         to.setBalance(to.getBalance() + amount);
