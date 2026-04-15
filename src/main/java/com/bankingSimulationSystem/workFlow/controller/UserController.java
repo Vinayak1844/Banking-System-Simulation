@@ -17,7 +17,7 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/register")
-    public ResponseEntity<User> create(@RequestBody UserRequest request){
+    public ResponseEntity<User> create(@Valid @RequestBody UserRequest request){
 
         User user = new User();
         user.setName(request.getName());
