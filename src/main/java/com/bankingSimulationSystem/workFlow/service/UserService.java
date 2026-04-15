@@ -1,6 +1,7 @@
 package com.bankingSimulationSystem.workFlow.service;
 
 import com.bankingSimulationSystem.workFlow.entity.User;
+import com.bankingSimulationSystem.workFlow.exception.ResourceNotFoundException;
 import com.bankingSimulationSystem.workFlow.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,6 @@ public class UserService {
     }
 
     public User getByEmail(String email){
-        return userRepo.findByEmail(email).orElseThrow(()->new RuntimeException("User Not Found"));
+        return userRepo.findByEmail(email).orElseThrow(()->new ResourceNotFoundException("User Not Found"));
     }
 }
