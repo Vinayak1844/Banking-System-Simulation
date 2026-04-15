@@ -3,6 +3,7 @@ package com.bankingSimulationSystem.workFlow.controller;
 import com.bankingSimulationSystem.workFlow.dto.UserRequest;
 import com.bankingSimulationSystem.workFlow.entity.User;
 import com.bankingSimulationSystem.workFlow.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
