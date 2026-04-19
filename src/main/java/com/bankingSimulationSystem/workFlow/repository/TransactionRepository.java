@@ -7,5 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface TransactionRepository extends JpaRepository<Transaction,Long> {
-    List<Transaction> findByFromAccountOrToAccount(Account from,Account to);
+    List<Transaction> findByFromAccount_IdOrToAccount_Id(Long fromId,Long toId);
 }

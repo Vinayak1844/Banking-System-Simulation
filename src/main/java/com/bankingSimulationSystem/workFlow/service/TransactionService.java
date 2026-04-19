@@ -12,12 +12,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service @RequiredArgsConstructor
 public class TransactionService {
 
     private final AccountRepository accountRepo;
     private final TransactionRepository transactionRepo;
+
+    public List<Transaction> getAccountsTransactions(Long accountId){
+        return transactionRepo.findByFromAccount_IdOrToAccount_Id(accountId,accountId);
+    }
 
     @Transactional
     public void deposit(Long accId,double amount){
@@ -83,6 +88,8 @@ public class TransactionService {
 
         from.setBalance(from.getBalance() - amount);
         to.setBalance(to.getBalance() + amount);
+        accountRepo.save(from);
+        accountRepo.save(to);
 
         Transaction txn = new Transaction();
         txn.setTransactionType(TransactionType.TRANSFER);
