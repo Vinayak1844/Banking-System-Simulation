@@ -6,23 +6,26 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-@Entity
 @Getter @Setter
+@Entity
 public class Transaction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private double amount;
+
     @Enumerated(EnumType.STRING)
     private TransactionType transactionType;
 
-    private double amount;
     private LocalDateTime timeStamp;
 
     @ManyToOne
-    private Account toAccount;
+    @JoinColumn(name = "from_account_id")
+    private Account fromAccount;
 
     @ManyToOne
-    private Account fromAccount;
+    @JoinColumn(name = "to_account_id")
+    private Account toAccount;
 }
