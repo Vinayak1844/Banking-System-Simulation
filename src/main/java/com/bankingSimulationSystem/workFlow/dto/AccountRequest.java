@@ -6,10 +6,6 @@ import lombok.Data;
 
 @Data
 public class AccountRequest {
-
-    @NotBlank(message = "Email can not be empty")
-    private String email;
-
     @NotBlank(message = "Account type required")
     private AccountType accountType;
 }

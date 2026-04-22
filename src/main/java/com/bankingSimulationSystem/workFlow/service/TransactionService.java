@@ -35,14 +35,6 @@ public class TransactionService {
         return txns.stream().map(this::mapToResponse).toList();
     }
 
-    public List<TransactionResponse> getMyAccountStatement(){
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepo.findByEmail(email).orElseThrow(() -> new RuntimeException("User Not Found"));
-
-        List<Transaction> txns = transactionRepo.findByFromAccount_UserOrToAccount_User(user,user);
-        return txns.stream().map(this::mapToResponse).toList();
-    }
-
     @Transactional
     public void deposit(Long accId,double amount){
         if(amount <= 0){
