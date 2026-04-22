@@ -27,38 +27,39 @@ src/main/java/com/bankingSimulationSystem/workFlow/
 ├── controller/
 │   ├── AuthController.java         # Login → returns JWT
 │   ├── UserController.java         # User registration
-│   ├── AccountController.java      # Account creation
-│   └── TransactionController.java  # Deposit, withdraw, transfer, history
+│   ├── AccountController.java      # Account creation + fetch my accounts
+│   └── TransactionController.java  # Deposit, withdraw, transfer, my statement
 ├── dto/
 │   ├── AuthRequest.java
 │   ├── UserRequest.java
 │   ├── AccountRequest.java
 │   ├── DepositRequest.java
 │   ├── WithdrawRequest.java
-│   └── TransferRequest.java
+│   ├── TransferRequest.java
+│   └── TransactionResponse.java    # Response DTO for transaction history
 ├── entity/
 │   ├── User.java                   # User with role (ADMIN/USER)
-│   ├── Account.java                # Account with type (SAVINGS/CURRENT)
+│   ├── Account.java                # Account with type (SAVINGS/CURRENT) and UUID account number
 │   ├── Transaction.java            # Transaction record with timestamp
 │   ├── AccountType.java            # Enum: SAVINGS, CURRENT
 │   ├── TransactionType.java        # Enum: DEPOSIT, WITHDRAW, TRANSFER
 │   └── Role.java                   # Enum: ADMIN, USER
 ├── exception/
-│   ├── GlobalExceptionHandler.java
+│   ├── GlobalExceptionHandler.java # Handles RuntimeException + validation errors
 │   ├── BadRequestException.java
 │   └── ResourceNotFoundException.java
 ├── repository/
 │   ├── UserRepository.java
-│   ├── AccountRepository.java
-│   └── TransactionRepository.java
+│   ├── AccountRepository.java      # findByUser(User)
+│   └── TransactionRepository.java  # findByFromAccount_UserOrToAccount_User(...)
 ├── security/
-│   ├── JwtUtil.java                # Token generation & validation
+│   ├── JwtUtil.java                # Token generation & validation (1hr expiry, HS256)
 │   ├── JwtFilter.java              # Per-request JWT authentication filter
 │   └── CustomUserDetails.java      # UserDetails adapter
 └── service/
-    ├── UserService.java
-    ├── AccountService.java
-    ├── TransactionService.java
+    ├── UserService.java            # BCrypt password encoding on registration
+    ├── AccountService.java         # Auto-assigns UUID account number and linked user
+    ├── TransactionService.java     # deposit / withdraw / transfer + ownership checks
     └── CustomUserDetailsService.java
 ```
 
@@ -96,8 +97,11 @@ spring.datasource.password=your_mysql_password
 
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
 server.port=8080
 ```
+
+> ⚠️ The JWT secret is currently hardcoded in `JwtUtil.java`. Move it to `application.properties` or an environment variable before deploying.
 
 ### 4. Build and run
 
@@ -111,7 +115,7 @@ The server starts at `http://localhost:8080`.
 
 ## 🔐 Authentication
 
-The API uses **stateless JWT authentication**. Public endpoints are `/auth/**` and `POST /users/register`. All other endpoints require a valid `Bearer` token.
+The API uses **stateless JWT authentication**. Public endpoints are `/auth/**` and `POST /users/register`. All other endpoints require a valid `Bearer` token. Tokens expire after **1 hour**.
 
 ### Register a user
 
@@ -138,7 +142,7 @@ Content-Type: application/json
 }
 ```
 
-**Response:** A JWT string. Include it in subsequent requests:
+**Response:** A JWT string. Include it in all subsequent requests:
 
 ```
 Authorization: Bearer <token>
@@ -154,7 +158,8 @@ All endpoints below require the `Authorization: Bearer <token>` header.
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `POST` | `/accounts/create` | Create a new bank account |
+| `POST` | `/accounts/create` | Create a new bank account for the authenticated user |
+| `GET` | `/accounts/my` | Fetch all accounts belonging to the authenticated user |
 
 ```json
 // POST /accounts/create
@@ -166,6 +171,8 @@ All endpoints below require the `Authorization: Bearer <token>` header.
 
 Account types: `SAVINGS`, `CURRENT`
 
+> On creation, a UUID-based account number is automatically generated and balance is set to `0`.
+
 ---
 
 ### Transactions
@@ -174,8 +181,8 @@ Account types: `SAVINGS`, `CURRENT`
 |---|---|---|
 | `POST` | `/transactions/deposit` | Deposit funds into an account |
 | `POST` | `/transactions/withdraw` | Withdraw funds from an account |
-| `POST` | `/transactions/transfer` | Transfer funds between accounts |
-| `GET` | `/transactions/account/{id}` | Get transaction history for an account |
+| `POST` | `/transactions/transfer` | Transfer funds between two accounts |
+| `GET` | `/transactions/my/statement` | Get full transaction history for the authenticated user |
 
 ```json
 // POST /transactions/deposit
@@ -188,6 +195,21 @@ Account types: `SAVINGS`, `CURRENT`
 { "fromId": 1, "toId": 2, "amount": 200.00 }
 ```
 
+**Transaction Response (GET /transactions/my/statement):**
+
+```json
+[
+  {
+    "id": 1,
+    "type": "DEPOSIT",
+    "amount": 500.00,
+    "time": "2024-11-01T10:30:00",
+    "fromAccountId": null,
+    "toAccountId": 1
+  }
+]
+```
+
 ---
 
 ## 🧱 Data Model
@@ -196,8 +218,9 @@ Account types: `SAVINGS`, `CURRENT`
 User ──< Account ──< Transaction
 ```
 
-- A **User** can have multiple **Accounts** (SAVINGS or CURRENT).
-- Each **Transaction** records the amount, type, timestamp, and the source/destination accounts.
+- A **User** can have multiple **Accounts** (`SAVINGS` or `CURRENT`), each with an auto-generated UUID account number.
+- Each **Transaction** records the amount, type, timestamp, and source/destination accounts.
+- For `DEPOSIT`, only `toAccount` is set. For `WITHDRAW`, only `fromAccount` is set. For `TRANSFER`, both are set.
 - Transaction types: `DEPOSIT`, `WITHDRAW`, `TRANSFER`.
 
 ---
@@ -205,17 +228,21 @@ User ──< Account ──< Transaction
 ## 🛡️ Security Notes
 
 - Passwords are hashed with **BCrypt** before storage.
-- JWT tokens are validated on every request via a servlet filter.
+- JWT tokens are signed with **HS256** and validated on every request via a servlet filter.
+- All transaction operations verify that the acting user owns the source account.
 - Sessions are **stateless** — no server-side session is maintained.
-- Before deploying, move sensitive config (DB credentials, JWT secret) to environment variables or a secrets manager.
+- Before deploying, move the JWT secret and DB credentials to environment variables or a secrets manager.
 
 ---
 
-## 🚧 Potential Improvements
+## 🚧 Known Issues & Potential Improvements
 
-- Add JWT secret key configuration via `application.properties`
-- Implement token refresh / logout (token blacklist)
+- `AccountRequest.email` field is accepted but ignored — the account is always linked to the JWT-authenticated user
+- `@NotBlank` on `DepositRequest.amount` (a `double`) is a mismatched constraint and has no effect
+- JWT secret key is hardcoded in `JwtUtil.java` — should be externalized to config
+- `getMyTransactions()` and `getMyAccountStatement()` in `TransactionService` are duplicates — one should be removed
+- Add JWT token refresh / logout (token blacklist)
 - Add Swagger / OpenAPI documentation
 - Write unit and integration tests
 - Add pagination for transaction history
-- Introduce `ADMIN` role-based access control
+- Introduce `ADMIN` role-based access control endpoints
