@@ -1,5 +1,6 @@
 package com.bankingSimulationSystem.workFlow.service;
 
+import com.bankingSimulationSystem.workFlow.dto.TransactionResponse;
 import com.bankingSimulationSystem.workFlow.entity.Account;
 import com.bankingSimulationSystem.workFlow.entity.Transaction;
 import com.bankingSimulationSystem.workFlow.entity.TransactionType;
@@ -24,8 +25,22 @@ public class TransactionService {
     private final TransactionRepository transactionRepo;
     private final UserRepository userRepo;
 
-    public List<Transaction> getAccountsTransactions(Long accountId){
-        return transactionRepo.findByFromAccount_IdOrToAccount_Id(accountId,accountId);
+    public List<TransactionResponse> getMyTransactions(){
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        User user = userRepo.findByEmail(email).orElseThrow();
+
+        List<Transaction> txns = transactionRepo.findByFromAccount_UserOrToAccount_User(user,user);
+
+        return txns.stream().map(this::mapToResponse).toList();
+    }
+
+    public List<TransactionResponse> getMyAccountStatement(){
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepo.findByEmail(email).orElseThrow(() -> new RuntimeException("User Not Found"));
+
+        List<Transaction> txns = transactionRepo.findByFromAccount_UserOrToAccount_User(user,user);
+        return txns.stream().map(this::mapToResponse).toList();
     }
 
     @Transactional
@@ -137,4 +152,20 @@ public class TransactionService {
         transactionRepo.save(txn);
 
     }
+
+    public TransactionResponse mapToResponse(Transaction txn){
+        return TransactionResponse.builder()
+                .id(txn.getId())
+                .type(txn.getTransactionType())
+                .amount(txn.getAmount())
+                .time(txn.getTimeStamp())
+                .fromAccountId(
+                        txn.getFromAccount() != null ? txn.getFromAccount().getId() : null
+                )
+                .toAccountId(
+                        txn.getToAccount() != null ? txn.getToAccount().getId() : null
+                )
+                .build();
+    }
+
 }

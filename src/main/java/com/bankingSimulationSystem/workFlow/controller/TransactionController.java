@@ -1,6 +1,7 @@
 package com.bankingSimulationSystem.workFlow.controller;
 
 import com.bankingSimulationSystem.workFlow.dto.DepositRequest;
+import com.bankingSimulationSystem.workFlow.dto.TransactionResponse;
 import com.bankingSimulationSystem.workFlow.dto.TransferRequest;
 import com.bankingSimulationSystem.workFlow.dto.WithdrawRequest;
 import com.bankingSimulationSystem.workFlow.entity.Transaction;
@@ -19,9 +20,9 @@ public class TransactionController {
 
     private final TransactionService transactionService;
 
-    @GetMapping("/account/{id}")
-    public List<Transaction> getTransaction(@PathVariable Long id){
-        return transactionService.getAccountsTransactions(id);
+    @GetMapping("/my/statement")
+    public ResponseEntity<List<TransactionResponse>> getMyStatement(){
+        return ResponseEntity.ok(transactionService.getMyTransactions());
     }
 
     @GetMapping("/welcome")
