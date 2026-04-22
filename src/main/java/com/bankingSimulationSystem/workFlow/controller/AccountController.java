@@ -9,10 +9,9 @@ import com.bankingSimulationSystem.workFlow.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.Response;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -25,6 +24,11 @@ public class AccountController {
     public ResponseEntity<Account> createAccount(@RequestBody AccountRequest request){
         Account acc = new Account();
         acc.setAccountType(request.getAccountType());
-        return ResponseEntity.ok(accountService.createAccount(request.getEmail(),acc));
+        return ResponseEntity.ok(accountService.createAccount(acc));
+    }
+
+    @GetMapping("/my")
+    public ResponseEntity<List<Account>> getMyAccounts(){
+        return ResponseEntity.ok(accountService.getMyAccounts());
     }
 }

@@ -6,6 +6,7 @@ import com.bankingSimulationSystem.workFlow.exception.ResourceNotFoundException;
 import com.bankingSimulationSystem.workFlow.repository.AccountRepository;
 import com.bankingSimulationSystem.workFlow.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,7 +19,10 @@ public class AccountService {
     private final AccountRepository repo;
     private final UserRepository userRepo;
 
-    public Account createAccount (String email,Account account){
+    public Account createAccount (Account account){
+        String email = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
         User user = userRepo.findByEmail(email).orElseThrow(()-> new ResourceNotFoundException("User Not Found"));
         account.setUser(user);
         account.setBalance(0);
@@ -26,8 +30,15 @@ public class AccountService {
         return repo.save(account);
     }
 
-    public List<Account> getAccounts(String email){
-        User user = userRepo.findByEmail(email).orElseThrow();
+    public List<Account> getMyAccounts(){
+
+        String email = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+
+        User user = userRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
         return repo.findByUser(user);
     }
 }

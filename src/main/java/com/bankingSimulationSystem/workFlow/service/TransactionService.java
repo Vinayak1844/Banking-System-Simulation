@@ -3,12 +3,15 @@ package com.bankingSimulationSystem.workFlow.service;
 import com.bankingSimulationSystem.workFlow.entity.Account;
 import com.bankingSimulationSystem.workFlow.entity.Transaction;
 import com.bankingSimulationSystem.workFlow.entity.TransactionType;
+import com.bankingSimulationSystem.workFlow.entity.User;
 import com.bankingSimulationSystem.workFlow.exception.BadRequestException;
 import com.bankingSimulationSystem.workFlow.exception.ResourceNotFoundException;
 import com.bankingSimulationSystem.workFlow.repository.AccountRepository;
 import com.bankingSimulationSystem.workFlow.repository.TransactionRepository;
+import com.bankingSimulationSystem.workFlow.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -19,6 +22,7 @@ public class TransactionService {
 
     private final AccountRepository accountRepo;
     private final TransactionRepository transactionRepo;
+    private final UserRepository userRepo;
 
     public List<Transaction> getAccountsTransactions(Long accountId){
         return transactionRepo.findByFromAccount_IdOrToAccount_Id(accountId,accountId);
@@ -26,11 +30,23 @@ public class TransactionService {
 
     @Transactional
     public void deposit(Long accId,double amount){
-        Account acc = accountRepo.findById(accId).orElseThrow(()-> new ResourceNotFoundException("Account Not Found"));
-
         if(amount <= 0){
             throw new BadRequestException("Amount must be positive");
         }
+
+        String email = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+
+        User user = userRepo.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        Account acc = accountRepo.findById(accId).orElseThrow(()-> new ResourceNotFoundException("Account Not Found"));
+
+        if (!acc.getUser().getId().equals(user.getId())) {
+            throw new BadRequestException("Unauthorized");
+        }
+
         acc.setBalance(acc.getBalance() + amount);
 
 
@@ -49,9 +65,19 @@ public class TransactionService {
         if(amount <= 0){
             throw new BadRequestException("Invalid amount");
         }
+        String email = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+
+        User user = userRepo.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Account acc = accountRepo.findById(accId)
                 .orElseThrow();
+
+        if (!acc.getUser().getId().equals(user.getId())) {
+            throw new BadRequestException("Unauthorized");
+        }
 
         if(acc.getBalance() < amount){
             throw new BadRequestException("Insufficient Balance");
@@ -79,9 +105,19 @@ public class TransactionService {
             throw new BadRequestException("Invalid amount");
         }
 
+        String email = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+
+        User user = userRepo.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
         Account from  = accountRepo.findById(fromId).orElseThrow(()-> new ResourceNotFoundException("No 'from' acc exists"));
         Account to = accountRepo.findById(toId).orElseThrow(()-> new ResourceNotFoundException("No 'to' acc exists"));
 
+        if (!from.getUser().getId().equals(user.getId())) {
+            throw new BadRequestException("Unauthorized: not your account");
+        }
 
 
         if(from.getBalance() < amount) throw new BadRequestException("Insufficient Balance");
