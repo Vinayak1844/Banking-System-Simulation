@@ -13,14 +13,24 @@ function Dashboard() {
 
     return (
         <div className="min-h-screen bg-gray-100">
-            <nav className="bg-blue-700 text-white p-4 flex justify-between">
+            <nav className="bg-blue-700 text-white p-4 flex justify-between items-center">
                 <h1 className="text-2xl font-bold">Banking Dashboard</h1>
-                <button
-                    onClick={handleLogout}
-                    className="bg-red-500 px-4 py-2 rounded"
-                >
-                    Logout
-                </button>
+
+                <div className="flex gap-4">
+                    <button
+                        onClick={() => navigate("/accounts")}
+                        className="bg-green-600 px-4 py-2 rounded hover:bg-green-700"
+                    >
+                        Manage Accounts
+                    </button>
+
+                    <button
+                        onClick={handleLogout}
+                        className="bg-red-500 px-4 py-2 rounded hover:bg-red-600"
+                    >
+                        Logout
+                    </button>
+                </div>
             </nav>
 
             <div className="p-8">

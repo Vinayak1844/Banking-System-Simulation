@@ -24,8 +24,9 @@ function Login() {
 
         try {
             const response = await API.post("/auth/login", form);
+            console.log(response.data);
 
-            login(response.data.token);
+            login(response.data);
 
             alert("Login successful");
             navigate("/dashboard");

@@ -2,12 +2,12 @@ import { createContext, useState } from "react";
 
 export const AuthContext = createContext();
 
-export const AuthProvider = ({ children }) => {
+export function AuthProvider({ children }) {
     const [token, setToken] = useState(localStorage.getItem("token"));
 
-    const login = (jwt) => {
-        localStorage.setItem("token", jwt);
-        setToken(jwt);
+    const login = (jwtToken) => {
+        localStorage.setItem("token", jwtToken);
+        setToken(jwtToken);
     };
 
     const logout = () => {
@@ -20,4 +20,4 @@ export const AuthProvider = ({ children }) => {
             {children}
         </AuthContext.Provider>
     );
-};
+}
