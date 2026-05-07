@@ -1,19 +1,20 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import Navbar from "../components/Navbar";
 
 export default function Accounts() {
     const [accounts, setAccounts] = useState([]);
     const [accountType, setAccountType] = useState("");
     const [message, setMessage] = useState("");
 
-    const fetchAccounts = async () => {
+    async function fetchAccounts() {
         try {
             const res = await api.get("/accounts/my");
             setAccounts(res.data);
-        } catch (err) {
+        } catch {
             setMessage("Failed to load accounts");
         }
-    };
+    }
 
     const createAccount = async () => {
         try {
@@ -30,25 +31,29 @@ export default function Accounts() {
     };
 
     useEffect(() => {
-        fetchAccounts();
+        const timer = setTimeout(() => {
+            fetchAccounts();
+        }, 0);
+
+        return () => clearTimeout(timer);
     }, []);
 
     return (
-        <div className="min-h-screen bg-gray-100 p-6">
-            <div className="max-w-5xl mx-auto">
+        <div className="min-h-screen bg-slate-100">
+            <Navbar />
+            <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+                <h1 className="mb-2 text-3xl font-bold text-slate-900">My Accounts</h1>
+                <p className="mb-6 text-sm text-slate-600">
+                    Create and monitor all your banking accounts here.
+                </p>
 
-                <h1 className="text-3xl font-bold mb-6 text-center">
-                    My Accounts
-                </h1>
-
-                {/* Create Account */}
-                <div className="bg-white p-6 rounded-xl shadow mb-8">
-                    <h2 className="text-xl font-semibold mb-4">Create New Account</h2>
+                <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                    <h2 className="mb-4 text-xl font-semibold text-slate-900">Create New Account</h2>
 
                     <select
                         value={accountType}
                         onChange={(e) => setAccountType(e.target.value)}
-                        className="w-full border p-3 rounded mb-4"
+                        className="mb-4 w-full rounded-lg border border-slate-300 p-3 text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                     >
                         <option value="">Select Account Type</option>
                         <option value="SAVINGS">Savings</option>
@@ -57,43 +62,46 @@ export default function Accounts() {
 
                     <button
                         onClick={createAccount}
-                        className="w-full bg-blue-600 text-white py-3 rounded hover:bg-blue-700"
+                        className="w-full rounded-lg bg-blue-600 py-3 font-medium text-white transition hover:bg-blue-700"
                     >
                         Create Account
                     </button>
 
                     {message && (
-                        <p className="mt-3 text-center text-red-500">{message}</p>
+                        <p className="mt-3 rounded-md bg-slate-100 px-3 py-2 text-center text-sm text-slate-700">
+                            {message}
+                        </p>
                     )}
                 </div>
 
-                {/* Accounts List */}
-                <div className="grid md:grid-cols-2 gap-6">
+                <div className="grid gap-6 md:grid-cols-2">
                     {accounts.map((acc) => (
                         <div
                             key={acc.id}
-                            className="bg-white rounded-xl shadow p-6"
+                            className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
                         >
-                            <h3 className="text-xl font-bold mb-2">
+                            <h3 className="mb-2 text-xl font-semibold text-slate-900">
                                 {acc.accountType}
                             </h3>
 
-                            <p className="text-gray-600">
-                                Account No:
-                                <span className="font-medium ml-2">
-                  {acc.accountNumber}
-                </span>
+                            <p className="text-sm text-slate-500">
+                                Account Number
+                                <span className="ml-2 font-medium text-slate-700">{acc.accountNumber}</span>
                             </p>
 
-                            <p className="text-gray-600 mt-2">
-                                Balance:
-                                <span className="font-bold text-green-600 ml-2">
-                  ₹{acc.balance}
-                </span>
+                            <p className="mt-4 text-sm text-slate-500">Current Balance</p>
+                            <p className="text-3xl font-bold text-emerald-600">
+                                ₹{Number(acc.balance).toLocaleString()}
                             </p>
                         </div>
                     ))}
                 </div>
+
+                {accounts.length === 0 && (
+                    <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center text-slate-500">
+                        No accounts available yet. Create your first account to get started.
+                    </p>
+                )}
             </div>
         </div>
     );
