@@ -1,8 +1,10 @@
 package com.bankingSimulationSystem.workFlow.controller;
 
 import com.bankingSimulationSystem.workFlow.entity.Account;
+import com.bankingSimulationSystem.workFlow.entity.Transaction;
 import com.bankingSimulationSystem.workFlow.entity.User;
 import com.bankingSimulationSystem.workFlow.repository.AccountRepository;
+import com.bankingSimulationSystem.workFlow.repository.TransactionRepository;
 import com.bankingSimulationSystem.workFlow.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +19,7 @@ import java.util.List;
 public class AdminController {
     private final UserRepository userRepository;
     private final AccountRepository accountRepository;
+    private final TransactionRepository transactionRepository;
 
     @GetMapping("/users")
     public List<User> allUsers(){
@@ -26,5 +29,10 @@ public class AdminController {
     @GetMapping("/accounts")
     public List<Account> allAccounts(){
         return accountRepository.findAll();
+    }
+
+    @GetMapping("/transactions")
+    public List<Transaction> allTransactions() {
+        return transactionRepository.findAll();
     }
 }
