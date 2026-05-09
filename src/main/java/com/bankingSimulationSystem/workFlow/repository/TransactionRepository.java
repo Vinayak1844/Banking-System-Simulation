@@ -9,4 +9,5 @@ import java.util.List;
 
 public interface TransactionRepository extends JpaRepository<Transaction,Long> {
     List<Transaction> findByFromAccount_UserOrToAccount_User(User user1,User user2);
+    List<Transaction> findByFromAccountOrToAccount(Account fromAccount, Account toAccount);
 }

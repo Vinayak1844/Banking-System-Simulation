@@ -102,11 +102,7 @@ public class TransactionService {
     }
 
     @Transactional
-    public void transfer(Long fromId,Long toId,double amount){
-
-        if(fromId.equals(toId)){
-            throw new BadRequestException("Cannot transfer to same account");
-        }
+    public void transferByReceiverName(Long fromId, String receiverName, double amount){
 
         if(amount <= 0){
             throw new BadRequestException("Invalid amount");
@@ -119,13 +115,34 @@ public class TransactionService {
         User user = userRepo.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        Account from  = accountRepo.findById(fromId).orElseThrow(()-> new ResourceNotFoundException("No 'from' acc exists"));
-        Account to = accountRepo.findById(toId).orElseThrow(()-> new ResourceNotFoundException("No 'to' acc exists"));
+        Account from  = accountRepo.findById(fromId)
+                .orElseThrow(() -> new ResourceNotFoundException("No 'from' acc exists"));
 
         if (!from.getUser().getId().equals(user.getId())) {
             throw new BadRequestException("Unauthorized: not your account");
         }
 
+        List<User> matchedReceivers = userRepo.findByNameIgnoreCase(receiverName.trim());
+
+        if (matchedReceivers.isEmpty()) {
+            throw new ResourceNotFoundException("Receiver user not found");
+        }
+        if (matchedReceivers.size() > 1) {
+            throw new BadRequestException("Multiple users found with this name. Use a unique username.");
+        }
+
+        User receiver = matchedReceivers.get(0);
+        List<Account> receiverAccounts = accountRepo.findByUser(receiver);
+
+        if (receiverAccounts.isEmpty()) {
+            throw new ResourceNotFoundException("Receiver has no bank account");
+        }
+
+        Account to = receiverAccounts.get(0);
+
+        if (from.getId().equals(to.getId())) {
+            throw new BadRequestException("Cannot transfer to same account");
+        }
 
         if(from.getBalance() < amount) throw new BadRequestException("Insufficient Balance");
 

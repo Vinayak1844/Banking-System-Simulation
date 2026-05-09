@@ -46,7 +46,11 @@ public class TransactionController {
 
     @PostMapping("/transfer")
     public ResponseEntity<String> transfer(@Valid @RequestBody TransferRequest request){
-        transactionService.transfer(request.getFromId(), request.getToId(), request.getAmount());
+        transactionService.transferByReceiverName(
+                request.getFromId(),
+                request.getReceiverName(),
+                request.getAmount()
+        );
 
         return ResponseEntity.ok("Transfer Successfull");
     }
