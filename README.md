@@ -1,10 +1,12 @@
 # 🏦 Banking System Simulation
 
-A RESTful banking backend built with **Spring Boot 3**, featuring JWT-based authentication, Swagger/OpenAPI documentation, role-based access control, account management, and full transaction support — deposit, withdrawal, and transfer.
+A full-stack banking application with a **Spring Boot 3** RESTful backend and a **React** frontend, featuring JWT-based authentication, Swagger/OpenAPI documentation, role-based access control, account management, and full transaction support — deposit, withdrawal, and transfer by receiver name.
 
 ---
 
 ## 🛠️ Tech Stack
+
+### Backend
 
 | Layer        | Technology                                  |
 |--------------|---------------------------------------------|
@@ -17,54 +19,90 @@ A RESTful banking backend built with **Spring Boot 3**, featuring JWT-based auth
 | API Docs     | SpringDoc OpenAPI (Swagger UI) 2.6.0        |
 | Utilities    | Lombok, Bean Validation (Jakarta), spring-dotenv 4.0.0 |
 
+### Frontend
+
+| Layer     | Technology                  |
+|-----------|-----------------------------|
+| Framework | React (Vite dev server)     |
+| HTTP      | Axios                       |
+| Auth      | JWT stored in localStorage  |
+
 ---
 
 ## 📁 Project Structure
 
 ```
-src/main/java/com/bankingSimulationSystem/workFlow/
-├── config/
-│   ├── SecurityConfig.java              # JWT filter chain, BCrypt, stateless sessions, CORS, role-based rules
-│   └── OpenApiConfig.java               # Swagger/OpenAPI config with JWT bearer scheme
-├── controller/
-│   ├── AuthController.java              # POST /auth/login → returns JWT string
-│   ├── UserController.java              # POST /users/register
-│   ├── AccountController.java           # POST /accounts/create, GET /accounts/my
-│   ├── TransactionController.java       # Deposit, withdraw, transfer, statement + GET /transactions/welcome
-│   └── AdminController.java             # GET /admin/users, GET /admin/accounts (ADMIN role only)
-├── dto/
-│   ├── AuthRequest.java                 # { email, password }
-│   ├── UserRequest.java                 # { name, email, password } with validation
-│   ├── AccountRequest.java              # { accountType: SAVINGS | CURRENT }
-│   ├── DepositRequest.java              # { accountId, amount } — @Positive on amount only
-│   ├── WithdrawRequest.java             # { accountId, amount } — no validation annotations
-│   ├── TransferRequest.java             # { fromId, toId, amount } with @NotNull and @Positive
-│   ├── TransactionResponse.java         # Response DTO for transaction history
-│   └── ErrorResponse.java              # { message, statusCode, time }
-├── entity/
-│   ├── User.java                        # id, name, email, password, role
-│   ├── Account.java                     # id, accountType, accountNumber, balance, user
-│   ├── Transaction.java                 # id, amount, transactionType, timeStamp, fromAccount, toAccount
-│   ├── AccountType.java                 # Enum: SAVINGS, CURRENT
-│   ├── TransactionType.java             # Enum: DEPOSIT, WITHDRAW, TRANSFER
-│   └── Role.java                        # Enum: ADMIN, USER
-├── exception/
-│   ├── GlobalExceptionHandler.java      # Handles ResourceNotFoundException, BadRequestException, MethodArgumentNotValidException, and generic fallback
-│   ├── BadRequestException.java
-│   └── ResourceNotFoundException.java
-├── repository/
-│   ├── UserRepository.java              # findByEmail(String)
-│   ├── AccountRepository.java           # findByUser(User)
-│   └── TransactionRepository.java       # findByFromAccount_UserOrToAccount_User(User, User)
-├── security/
-│   ├── JwtUtil.java                     # Token generation & validation — secret and expiry read from env vars
-│   ├── JwtFilter.java                   # Per-request JWT authentication filter
-│   └── CustomUserDetails.java           # UserDetails adapter
-└── service/
-    ├── UserService.java                 # BCrypt password encoding on registration
-    ├── AccountService.java              # Auto-assigns UUID account number, links authenticated user
-    ├── TransactionService.java          # deposit / withdraw / transfer + ownership checks
-    └── CustomUserDetailsService.java    # Loads user by email for Spring Security
+Banking-System-Simulation/
+├── banking-frontend/                    # React frontend
+│   └── src/
+│       ├── components/
+│       │   ├── DepositForm.jsx
+│       │   ├── Navbar.jsx
+│       │   ├── PrivateRoute.jsx
+│       │   ├── TransactionHistory.jsx
+│       │   ├── TransferForm.jsx
+│       │   └── WithdrawForm.jsx
+│       ├── context/
+│       │   └── AuthContext.jsx          # JWT parsing, login/logout state
+│       ├── pages/
+│       │   ├── Accounts.jsx
+│       │   ├── Dashboard.jsx
+│       │   ├── Login.jsx
+│       │   ├── Register.jsx
+│       │   ├── Transactions.jsx
+│       │   └── admin/
+│       │       ├── AdminAccounts.jsx
+│       │       ├── AdminDashboard.jsx
+│       │       ├── AdminTransactions.jsx
+│       │       └── AdminUsers.jsx
+│       ├── routes/
+│       │   └── ProtectedRoute.jsx
+│       └── services/
+│           └── api.js                   # Axios instance with JWT interceptor (baseURL: localhost:8080)
+└── src/main/java/com/bankingSimulationSystem/workFlow/
+    ├── config/
+    │   ├── CorsConfig.java              # Dedicated CORS filter bean (localhost:3000 + localhost:5173)
+    │   ├── SecurityConfig.java          # JWT filter chain, BCrypt, stateless sessions, CORS, role-based rules
+    │   └── OpenApiConfig.java           # Swagger/OpenAPI config with JWT bearer scheme
+    ├── controller/
+    │   ├── AuthController.java          # POST /auth/login → returns JWT string
+    │   ├── UserController.java          # POST /users/register
+    │   ├── AccountController.java       # POST /accounts/create, GET /accounts/my
+    │   ├── TransactionController.java   # Deposit, withdraw, transfer, statement + GET /transactions/welcome
+    │   └── AdminController.java         # GET /admin/users, GET /admin/accounts (ADMIN role only)
+    ├── dto/
+    │   ├── AuthRequest.java             # { email, password }
+    │   ├── UserRequest.java             # { name, email, password } with validation
+    │   ├── AccountRequest.java          # { accountType: SAVINGS | CURRENT }
+    │   ├── DepositRequest.java          # { accountId, amount } — @Positive on amount only
+    │   ├── WithdrawRequest.java         # { accountId, amount } — no validation annotations
+    │   ├── TransferRequest.java         # { fromId, receiverName, amount } — @NotNull, @NotBlank, @Positive
+    │   ├── TransactionResponse.java     # Response DTO for transaction history
+    │   └── ErrorResponse.java           # { message, statusCode, time }
+    ├── entity/
+    │   ├── User.java                    # id, name, email, password, role
+    │   ├── Account.java                 # id, accountType, accountNumber, balance, user
+    │   ├── Transaction.java             # id, amount, transactionType, timeStamp, fromAccount, toAccount
+    │   ├── AccountType.java             # Enum: SAVINGS, CURRENT
+    │   ├── TransactionType.java         # Enum: DEPOSIT, WITHDRAW, TRANSFER
+    │   └── Role.java                    # Enum: ADMIN, USER
+    ├── exception/
+    │   ├── GlobalExceptionHandler.java  # Handles ResourceNotFoundException, BadRequestException, MethodArgumentNotValidException, and generic fallback
+    │   ├── BadRequestException.java
+    │   └── ResourceNotFoundException.java
+    ├── repository/
+    │   ├── UserRepository.java          # findByEmail(String), findByNameIgnoreCase(String)
+    │   ├── AccountRepository.java       # findByUser(User)
+    │   └── TransactionRepository.java   # findByFromAccount_UserOrToAccount_User(User, User), findByFromAccountOrToAccount(Account, Account)
+    ├── security/
+    │   ├── JwtUtil.java                 # Token generation & validation — secret and expiry read from env vars
+    │   ├── JwtFilter.java               # Per-request JWT authentication filter
+    │   └── CustomUserDetails.java       # UserDetails adapter
+    └── service/
+        ├── UserService.java             # BCrypt password encoding on registration
+        ├── AccountService.java          # Auto-assigns UUID account number, links authenticated user
+        ├── TransactionService.java      # deposit / withdraw / transferByReceiverName + ownership checks
+        └── CustomUserDetailsService.java # Loads user by email for Spring Security
 ```
 
 ---
@@ -76,6 +114,7 @@ src/main/java/com/bankingSimulationSystem/workFlow/
 - Java 21+
 - Maven 3.8+
 - MySQL 8+
+- Node.js (for the frontend)
 
 ### 1. Clone the repository
 
@@ -113,13 +152,23 @@ JWT_EXPIRATION=86400000
 
 > ⚠️ **Security:** Add `.env` to `.gitignore`. The JWT expiration is set to **24 hours** (86400000 ms). The JWT secret is read via `@Value("${jwt.secret}")` in `JwtUtil` — ensure the key is long enough for HS256 (at least 32 characters).
 
-### 4. Build and run
+### 4. Build and run the backend
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
 The server starts at `http://localhost:8080`.
+
+### 5. Run the frontend
+
+```bash
+cd banking-frontend
+npm install
+npm run dev
+```
+
+The Vite dev server starts at `http://localhost:5173`.
 
 ---
 
@@ -146,6 +195,8 @@ These docs endpoints are publicly accessible (no token required).
 ## 🔐 Authentication
 
 The API uses **stateless JWT authentication**. Public endpoints are `/auth/**`, `POST /users/register`, and the Swagger docs paths. All other endpoints require a valid `Bearer` token in the `Authorization` header. Tokens are signed with **HS256** and expire after **24 hours** (configurable via `JWT_EXPIRATION`).
+
+The frontend stores the JWT in `localStorage` and attaches it automatically to every request via an Axios interceptor.
 
 ### Register a user
 
@@ -221,13 +272,13 @@ Account types: `SAVINGS`, `CURRENT`
 
 ### Transactions (requires Bearer token)
 
-| Method | Endpoint                     | Description                                            |
-|--------|------------------------------|--------------------------------------------------------|
-| `POST` | `/transactions/deposit`      | Deposit funds into an account you own                  |
-| `POST` | `/transactions/withdraw`     | Withdraw funds from an account you own                 |
-| `POST` | `/transactions/transfer`     | Transfer funds between two accounts                    |
+| Method | Endpoint                     | Description                                             |
+|--------|------------------------------|---------------------------------------------------------|
+| `POST` | `/transactions/deposit`      | Deposit funds into an account you own                   |
+| `POST` | `/transactions/withdraw`     | Withdraw funds from an account you own                  |
+| `POST` | `/transactions/transfer`     | Transfer funds to another user by name                  |
 | `GET`  | `/transactions/my/statement` | Get full transaction history for the authenticated user |
-| `GET`  | `/transactions/welcome`      | Health-check endpoint — returns a welcome string       |
+| `GET`  | `/transactions/welcome`      | Health-check endpoint — returns a welcome string        |
 
 **Request bodies:**
 
@@ -239,15 +290,16 @@ Account types: `SAVINGS`, `CURRENT`
 { "accountId": 1, "amount": 100.00 }
 
 // POST /transactions/transfer
-{ "fromId": 1, "toId": 2, "amount": 200.00 }
+{ "fromId": 1, "receiverName": "Jane Doe", "amount": 200.00 }
 ```
 
 **Validation notes:**
 - `deposit` — `@Positive` is declared on `DepositRequest.amount`, but `@Valid` is **not** used on the controller parameter, so Bean Validation is not triggered. Amount validation is enforced manually in `TransactionService` (`amount <= 0` check).
 - `withdraw` — `WithdrawRequest` has no validation annotations at all. Amount is validated manually in the service.
-- `transfer` — `@Valid` **is** present on the controller parameter; `fromId` and `toId` are `@NotNull`, `amount` is `@Positive`.
+- `transfer` — `@Valid` **is** present on the controller parameter; `fromId` is `@NotNull`, `receiverName` is `@NotBlank`, `amount` is `@Positive`.
 
-> Transfer validates that `fromId ≠ toId` and that the `from` account belongs to the authenticated user. Self-transfers are rejected with a `400 Bad Request`. The destination account can belong to any user.
+**Transfer logic:**
+Transfers are resolved by receiver **name** (case-insensitive lookup via `findByNameIgnoreCase`), not by account ID. The service finds the receiver user and automatically selects their first account as the destination. If multiple users share the same name, the transfer is rejected with a `400 Bad Request` asking for a unique name. The `from` account must belong to the authenticated user.
 
 **Transaction response (GET `/transactions/my/statement`):**
 
@@ -291,11 +343,11 @@ Account types: `SAVINGS`, `CURRENT`
 User ──< Account ──< Transaction (from / to)
 ```
 
-| Entity        | Key Fields                                                                 |
-|---------------|----------------------------------------------------------------------------|
-| `User`        | `id`, `name`, `email`, `password` (BCrypt), `role` (ADMIN / USER)         |
-| `Account`     | `id`, `accountType`, `accountNumber` (UUID), `balance`, `user` (FK)       |
-| `Transaction` | `id`, `amount`, `transactionType`, `timeStamp`, `fromAccount`, `toAccount` |
+| Entity        | Key Fields                                                                  |
+|---------------|-----------------------------------------------------------------------------|
+| `User`        | `id`, `name`, `email`, `password` (BCrypt), `role` (ADMIN / USER)          |
+| `Account`     | `id`, `accountType`, `accountNumber` (UUID), `balance`, `user` (FK)        |
+| `Transaction` | `id`, `amount`, `transactionType`, `timeStamp`, `fromAccount`, `toAccount`  |
 
 **Transaction account fields by type:**
 
@@ -332,7 +384,12 @@ All errors return a structured `ErrorResponse` JSON body:
 
 ## 🌐 CORS
 
-CORS is configured in `SecurityConfig` to allow requests from `http://localhost:3000` with methods `GET`, `POST`, `PUT`, and `DELETE`. Update the allowed origins before deploying to production.
+CORS is configured in two places — `CorsConfig` (a dedicated `CorsFilter` bean) and `SecurityConfig` (a `CorsConfigurationSource` bean). Both allow requests from:
+
+- `http://localhost:3000`
+- `http://localhost:5173` (Vite dev server)
+
+Allowed methods: `GET`, `POST`, `PUT`, `DELETE`, `OPTIONS`. All headers are permitted and credentials (`Authorization`) are exposed. Update the allowed origins before deploying to production.
 
 ---
 
@@ -345,19 +402,20 @@ CORS is configured in `SecurityConfig` to allow requests from `http://localhost:
 - Sessions are **stateless** — no server-side session is maintained.
 - Admin endpoints are restricted to users with `Role.ADMIN`.
 - CSRF is disabled (appropriate for stateless REST APIs).
+- The frontend parses the JWT client-side to extract the user role and drive admin route access.
 
 ---
 
 ## 🚧 Known Issues & Potential Improvements
 
-| Area       | Issue / Improvement                                                                                           |
-|------------|---------------------------------------------------------------------------------------------------------------|
-| Feature    | JWT token refresh / logout (token blacklist)                                                                  |
-| Feature    | Admin user creation endpoint or seeding mechanism (currently requires direct DB insert)                       |
-| Feature    | Pagination for transaction history                                                                            |
-| Feature    | CORS allowed origins are hardcoded to `localhost:3000` — should be configurable via environment variable      |
-| DX         | Unit and integration tests (only an empty context-load test exists)                                           |
-
+| Area       | Issue / Improvement                                                                                                      |
+|------------|--------------------------------------------------------------------------------------------------------------------------|
+| Feature    | JWT token refresh / logout (token blacklist)                                                                             |
+| Feature    | Admin user creation endpoint or seeding mechanism (currently requires direct DB insert)                                  |
+| Feature    | Pagination for transaction history                                                                                       |
+| Feature    | Transfer by receiver name fails silently if a user has multiple accounts — always picks the first account                |
+| Feature    | CORS allowed origins are hardcoded — should be configurable via environment variable                                     |
+| DX         | Unit and integration tests (only an empty context-load test exists)                                                      |
 ---
 
 ## 🧪 Running Tests
