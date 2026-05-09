@@ -1,7 +1,8 @@
 package com.bankingSimulationSystem.workFlow.controller;
 
-
 import com.bankingSimulationSystem.workFlow.dto.AuthRequest;
+import com.bankingSimulationSystem.workFlow.entity.User;
+import com.bankingSimulationSystem.workFlow.repository.UserRepository;
 import com.bankingSimulationSystem.workFlow.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -15,11 +16,12 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
+    private final UserRepository userRepository;
 
     @PostMapping("/login")
-    public String login(@RequestBody AuthRequest request) {
+    public LoginResponse login(@RequestBody AuthRequest request) {
 
-        // 🔐 Authenticate user
+        // 1. Authenticate email and password
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),
@@ -27,7 +29,19 @@ public class AuthController {
                 )
         );
 
-        // 🔑 Generate JWT
-        return jwtUtil.generateToken(request.getEmail());
+        // 2. Load full user entity from database
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() ->
+                        new RuntimeException("User not found"));
+
+        // 3. Generate JWT containing email, name, and role
+        String token = jwtUtil.generateToken(user);
+
+        // 4. Return JSON response
+        return new LoginResponse(token);
+    }
+
+
+    public record LoginResponse(String token) {
     }
 }

@@ -1,13 +1,9 @@
 package com.bankingSimulationSystem.workFlow.controller;
 
-
 import com.bankingSimulationSystem.workFlow.dto.AccountRequest;
-import com.bankingSimulationSystem.workFlow.dto.UserRequest;
 import com.bankingSimulationSystem.workFlow.entity.Account;
-import com.bankingSimulationSystem.workFlow.entity.User;
 import com.bankingSimulationSystem.workFlow.service.AccountService;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.Response;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,5 +26,11 @@ public class AccountController {
     @GetMapping("/my")
     public ResponseEntity<List<Account>> getMyAccounts(){
         return ResponseEntity.ok(accountService.getMyAccounts());
+    }
+
+    @DeleteMapping("/{accountId}")
+    public ResponseEntity<String> deleteMyBankAccount(@PathVariable Long accountId) {
+        accountService.deleteMyBankAccount(accountId);
+        return ResponseEntity.ok("Bank account deleted successfully");
     }
 }
