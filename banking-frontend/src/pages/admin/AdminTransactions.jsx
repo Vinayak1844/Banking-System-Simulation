@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import API from "../../services/api";
 import Navbar from "../../components/Navbar";
 
@@ -8,20 +8,28 @@ function AdminTransactions() {
     const [filter, setFilter] = useState("ALL");
     const [search, setSearch] = useState("");
 
-    async function fetchTransactions() {
+    const getErrorMessage = (err, fallback) => {
+        const errorData = err?.response?.data;
+        if (typeof errorData === "string" && errorData.trim()) {
+            return errorData;
+        }
+        if (errorData?.message) {
+            return errorData.message;
+        }
+        return fallback;
+    };
+
+    const fetchTransactions = useCallback(async () => {
         try {
             const res = await API.get("/admin/transactions");
             setTransactions(res.data);
         } catch (err) {
             console.error(err);
-            alert(
-                err.response?.data?.message ||
-                "Failed to load transactions"
-            );
+            alert(getErrorMessage(err, "Failed to load transactions"));
         } finally {
             setLoading(false);
         }
-    }
+    }, []);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -29,7 +37,7 @@ function AdminTransactions() {
         }, 0);
 
         return () => clearTimeout(timer);
-    }, []);
+    }, [fetchTransactions]);
 
     const filteredTransactions = useMemo(() => {
         return transactions
@@ -183,11 +191,11 @@ function AdminTransactions() {
                                     </td>
 
                                     <td className="p-4">
-                                        {txn.fromAccount?.id || "-"}
+                                        {txn.fromAccount?.user?.name || "-"}
                                     </td>
 
                                     <td className="p-4">
-                                        {txn.toAccount?.id || "-"}
+                                        {txn.toAccount?.user?.name || "-"}
                                     </td>
 
                                     <td className="p-4">

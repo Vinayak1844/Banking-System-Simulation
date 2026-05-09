@@ -11,6 +11,21 @@ function Login() {
 
     const { login } = useContext(AuthContext);
     const navigate = useNavigate();
+    const [message, setMessage] = useState({
+        type: "",
+        text: "",
+    });
+
+    const getErrorMessage = (err, fallback) => {
+        const errorData = err?.response?.data;
+        if (typeof errorData === "string" && errorData.trim()) {
+            return errorData;
+        }
+        if (errorData?.message) {
+            return errorData.message;
+        }
+        return fallback;
+    };
 
     const handleChange = (e) => {
         setForm({
@@ -25,11 +40,16 @@ function Login() {
         try {
             const response = await API.post("/auth/login", form);
             login(response.data?.token);
-
-            alert("Login successful");
-            navigate("/dashboard");
+            setMessage({
+                type: "success",
+                text: "Login successful. Redirecting...",
+            });
+            setTimeout(() => navigate("/dashboard"), 700);
         } catch (err) {
-            alert(err.response?.data || "Invalid credentials");
+            setMessage({
+                type: "error",
+                text: getErrorMessage(err, "Invalid credentials"),
+            });
         }
     };
 
@@ -44,6 +64,18 @@ function Login() {
                 <p className="mb-6 text-center text-sm text-slate-500">
                     Sign in to manage your banking activity securely.
                 </p>
+
+                {message.text && (
+                    <p
+                        className={`mb-4 rounded-md px-3 py-2 text-sm ${
+                            message.type === "success"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : "bg-rose-100 text-rose-700"
+                        }`}
+                    >
+                        {message.text}
+                    </p>
+                )}
 
                 <input
                     type="email"

@@ -15,8 +15,23 @@ function Transactions() {
     });
 
     const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState({
+        type: "",
+        text: "",
+    });
 
-    async function fetchTransactions(accountId) {
+    const getErrorMessage = (err, fallback) => {
+        const errorData = err?.response?.data;
+        if (typeof errorData === "string" && errorData.trim()) {
+            return errorData;
+        }
+        if (errorData?.message) {
+            return errorData.message;
+        }
+        return fallback;
+    };
+
+    const fetchTransactions = useCallback(async (accountId) => {
         try {
             const res = await API.get("/transactions/my/statement");
             const accountIdNum = Number(accountId);
@@ -31,8 +46,12 @@ function Transactions() {
             setTransactions(filteredTransactions);
         } catch (err) {
             console.error(err);
+            setMessage({
+                type: "error",
+                text: getErrorMessage(err, "Failed to load transactions"),
+            });
         }
-    }
+    }, []);
 
     const fetchAccounts = useCallback(async () => {
         try {
@@ -45,9 +64,12 @@ function Transactions() {
             }
         } catch (err) {
             console.error(err);
-            alert("Failed to load accounts");
+            setMessage({
+                type: "error",
+                text: "Failed to load accounts",
+            });
         }
-    }, []);
+    }, [fetchTransactions]);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -66,7 +88,11 @@ function Transactions() {
 
     const handleDeposit = async () => {
         if (!depositAmount) {
-            return alert("Enter amount");
+            setMessage({
+                type: "error",
+                text: "Enter amount for deposit",
+            });
+            return;
         }
         try {
             setLoading(true);
@@ -74,11 +100,17 @@ function Transactions() {
                 accountId: selectedAccount,
                 amount: depositAmount,
             });
-            alert("Deposit successful");
+            setMessage({
+                type: "success",
+                text: "Deposit successful",
+            });
             setDepositAmount("");
             refreshData();
         } catch (err) {
-            alert(err.response?.data?.message || "Deposit failed");
+            setMessage({
+                type: "error",
+                text: getErrorMessage(err, "Deposit failed"),
+            });
         } finally {
             setLoading(false);
         }
@@ -86,7 +118,11 @@ function Transactions() {
 
     const handleWithdraw = async () => {
         if (!withdrawAmount) {
-            return alert("Enter amount");
+            setMessage({
+                type: "error",
+                text: "Enter amount for withdrawal",
+            });
+            return;
         }
         try {
             setLoading(true);
@@ -94,11 +130,17 @@ function Transactions() {
                 accountId: selectedAccount,
                 amount: withdrawAmount,
             });
-            alert("Withdrawal successful");
+            setMessage({
+                type: "success",
+                text: "Withdrawal successful",
+            });
             setWithdrawAmount("");
             refreshData();
         } catch (err) {
-            alert(err.response?.data?.message || "Withdrawal failed");
+            setMessage({
+                type: "error",
+                text: getErrorMessage(err, "Withdrawal failed"),
+            });
         } finally {
             setLoading(false);
         }
@@ -106,12 +148,19 @@ function Transactions() {
 
     const handleTransfer = async () => {
         if (!transferData.fromId || !transferData.receiverName || !transferData.amount) {
-            return alert("Fill all transfer fields");
+            setMessage({
+                type: "error",
+                text: "Fill all transfer fields",
+            });
+            return;
         }
         try {
             setLoading(true);
             await API.post("/transactions/transfer", transferData);
-            alert("Transfer successful");
+            setMessage({
+                type: "success",
+                text: "Transfer successful",
+            });
             setTransferData({
                 fromId: "",
                 receiverName: "",
@@ -119,7 +168,10 @@ function Transactions() {
             });
             refreshData();
         } catch (err) {
-            alert(err.response?.data?.message || "Transfer failed");
+            setMessage({
+                type: "error",
+                text: getErrorMessage(err, "Transfer failed"),
+            });
         } finally {
             setLoading(false);
         }
@@ -133,6 +185,18 @@ function Transactions() {
                 <p className="mb-6 text-sm text-slate-600">
                     Deposit, withdraw, and transfer funds while tracking live transaction history.
                 </p>
+
+                {message.text && (
+                    <p
+                        className={`mb-6 rounded-lg px-4 py-3 text-sm font-medium ${
+                            message.type === "success"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : "bg-rose-100 text-rose-700"
+                        }`}
+                    >
+                        {message.text}
+                    </p>
+                )}
 
                 <div className="mb-8 grid grid-cols-1 gap-5 md:grid-cols-3">
                     {accounts.map((acc) => (
