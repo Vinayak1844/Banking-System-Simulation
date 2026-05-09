@@ -1,33 +1,26 @@
-import { useContext } from "react";
-import { AuthContext } from "../context/auth-context";
+import Navbar from "../../components/Navbar";
 import { useNavigate } from "react-router-dom";
-import Navbar from "../components/Navbar";
 
-function Dashboard() {
-    const { user } = useContext(AuthContext);
+function AdminDashboard() {
     const navigate = useNavigate();
 
     const cards = [
         {
+            title: "Users",
+            description: "View all registered users",
+            path: "/admin/users",
+        },
+        {
             title: "Accounts",
-            description: "View and manage your accounts",
-            path: "/accounts",
+            description: "View all bank accounts",
+            path: "/admin/accounts",
         },
         {
             title: "Transactions",
-            description: "Deposit, withdraw, transfer funds",
-            path: "/transactions",
+            description: "View all transactions",
+            path: "/admin/transactions",
         },
     ];
-
-    // Show Admin Panel only for ADMIN users
-    if (user?.role === "ADMIN") {
-        cards.push({
-            title: "Admin Panel",
-            description: "Manage users, accounts, and transactions",
-            path: "/admin",
-        });
-    }
 
     return (
         <div className="min-h-screen bg-gray-100">
@@ -35,12 +28,8 @@ function Dashboard() {
 
             <div className="p-8 max-w-7xl mx-auto">
                 <h1 className="text-4xl font-bold mb-8">
-                    Banking Dashboard
+                    Admin Dashboard
                 </h1>
-
-                <p className="text-gray-600 mb-8">
-                    Welcome, {user?.name || user?.email}
-                </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {cards.map((card) => (
@@ -52,7 +41,6 @@ function Dashboard() {
                             <h2 className="text-2xl font-bold mb-2">
                                 {card.title}
                             </h2>
-
                             <p>{card.description}</p>
                         </div>
                     ))}
@@ -62,4 +50,4 @@ function Dashboard() {
     );
 }
 
-export default Dashboard;
+export default AdminDashboard;

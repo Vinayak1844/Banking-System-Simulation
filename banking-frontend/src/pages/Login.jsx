@@ -1,7 +1,7 @@
 import { useState, useContext } from "react";
 import API from "../services/api";
 import { useNavigate, Link } from "react-router-dom";
-import { AuthContext } from "../context/AuthContext";
+import { AuthContext } from "../context/auth-context";
 
 function Login() {
     const [form, setForm] = useState({
@@ -24,9 +24,7 @@ function Login() {
 
         try {
             const response = await API.post("/auth/login", form);
-            console.log(response.data);
-
-            login(response.data);
+            login(response.data?.token);
 
             alert("Login successful");
             navigate("/dashboard");

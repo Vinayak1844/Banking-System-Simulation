@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import API from "../services/api";
 import Navbar from "../components/Navbar";
 
@@ -10,7 +10,7 @@ function Transactions() {
     const [withdrawAmount, setWithdrawAmount] = useState("");
     const [transferData, setTransferData] = useState({
         fromId: "",
-        toId: "",
+        receiverName: "",
         amount: "",
     });
 
@@ -18,14 +18,23 @@ function Transactions() {
 
     async function fetchTransactions(accountId) {
         try {
-            const res = await API.get(`/transactions/account/${accountId}`);
-            setTransactions(res.data);
+            const res = await API.get("/transactions/my/statement");
+            const accountIdNum = Number(accountId);
+
+            const filteredTransactions = (res.data || []).filter((txn) => {
+                return (
+                    Number(txn.fromAccountId) === accountIdNum ||
+                    Number(txn.toAccountId) === accountIdNum
+                );
+            });
+
+            setTransactions(filteredTransactions);
         } catch (err) {
             console.error(err);
         }
     }
 
-    async function fetchAccounts() {
+    const fetchAccounts = useCallback(async () => {
         try {
             const res = await API.get("/accounts/my");
             setAccounts(res.data);
@@ -38,16 +47,15 @@ function Transactions() {
             console.error(err);
             alert("Failed to load accounts");
         }
-    }
+    }, []);
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         const timer = setTimeout(() => {
             fetchAccounts();
         }, 0);
 
         return () => clearTimeout(timer);
-    }, []);
+    }, [fetchAccounts]);
 
     const refreshData = async () => {
         await fetchAccounts();
@@ -97,7 +105,7 @@ function Transactions() {
     };
 
     const handleTransfer = async () => {
-        if (!transferData.fromId || !transferData.toId || !transferData.amount) {
+        if (!transferData.fromId || !transferData.receiverName || !transferData.amount) {
             return alert("Fill all transfer fields");
         }
         try {
@@ -106,7 +114,7 @@ function Transactions() {
             alert("Transfer successful");
             setTransferData({
                 fromId: "",
-                toId: "",
+                receiverName: "",
                 amount: "",
             });
             refreshData();
@@ -208,13 +216,13 @@ function Transactions() {
                             ))}
                         </select>
                         <input
-                            type="number"
-                            placeholder="Receiver Account ID"
-                            value={transferData.toId}
+                            type="text"
+                            placeholder="Receiver Username"
+                            value={transferData.receiverName}
                             onChange={(e) =>
                                 setTransferData({
                                     ...transferData,
-                                    toId: e.target.value,
+                                    receiverName: e.target.value,
                                 })
                             }
                             className="mb-4 w-full rounded-lg border border-slate-300 p-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
@@ -272,19 +280,19 @@ function Transactions() {
                                         <tr
                                             key={txn.id}
                                             className={`border-b border-slate-100 ${
-                                                txn.transactionType === "DEPOSIT"
+                                                txn.type === "DEPOSIT"
                                                     ? "bg-emerald-50/50"
-                                                    : txn.transactionType === "WITHDRAW"
+                                                    : txn.type === "WITHDRAW"
                                                       ? "bg-rose-50/60"
                                                       : "bg-blue-50/60"
                                             }`}
                                         >
                                             <td className="p-4 font-semibold text-slate-700">
-                                                {txn.transactionType}
+                                                {txn.type}
                                             </td>
                                             <td className="p-4 text-slate-700">₹{txn.amount}</td>
                                             <td className="p-4 text-sm text-slate-600">
-                                                {new Date(txn.timeStamp).toLocaleString()}
+                                                {new Date(txn.time).toLocaleString()}
                                             </td>
                                         </tr>
                                     ))

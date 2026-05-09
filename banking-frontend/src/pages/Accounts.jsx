@@ -30,6 +30,24 @@ export default function Accounts() {
         }
     };
 
+    const deleteBankAccount = async (accountId) => {
+        const isConfirmed = window.confirm(
+            "Delete this bank account? This action cannot be undone."
+        );
+
+        if (!isConfirmed) {
+            return;
+        }
+
+        try {
+            await api.delete(`/accounts/${accountId}`);
+            setMessage("Bank account deleted successfully");
+            fetchAccounts();
+        } catch (err) {
+            setMessage(err.response?.data?.message || "Failed to delete bank account");
+        }
+    };
+
     useEffect(() => {
         const timer = setTimeout(() => {
             fetchAccounts();
@@ -93,6 +111,13 @@ export default function Accounts() {
                             <p className="text-3xl font-bold text-emerald-600">
                                 ₹{Number(acc.balance).toLocaleString()}
                             </p>
+
+                            <button
+                                onClick={() => deleteBankAccount(acc.id)}
+                                className="mt-5 w-full rounded-lg border border-rose-300 px-3 py-2 text-sm font-medium text-rose-700 transition hover:bg-rose-50"
+                            >
+                                Delete Bank Account
+                            </button>
                         </div>
                     ))}
                 </div>
